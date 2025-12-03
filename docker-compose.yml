@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # n8n - Workflow Automation Tool
+  # ═══════════════════════════════════════════════════════════════════════════
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://host.docker.internal:5678}
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-password123}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - n8n-toolkit-network
+    depends_on:
+      - minio
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MinIO - S3-Compatible Object Storage
+  # ═══════════════════════════════════════════════════════════════════════════
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-password123}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - n8n-toolkit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MinIO Setup - Creates bucket automatically
+  # ═══════════════════════════════════════════════════════════════════════════
+  minio-setup:
+    image: minio/mc
+    container_name: minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb myminio/$${S3_BUCKET_NAME} --ignore-existing;
+      mc anonymous set download myminio/$${S3_BUCKET_NAME};
+      exit 0;
+      "
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-password123}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-storage}
+    networks:
+      - n8n-toolkit-network
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Kokoro TTS - Text-to-Speech Service (CPU Version)
+  # For GPU version, see comments below
+  # ═══════════════════════════════════════════════════════════════════════════
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.2
+    container_name: kokoro-tts
+    restart: unless-stopped
+    ports:
+      - "8880:8880"
+    networks:
+      - n8n-toolkit-network
+    # ─────────────────────────────────────────────────────────────────────────
+    # GPU VERSION: Uncomment the following and comment out the CPU image above
+    # ─────────────────────────────────────────────────────────────────────────
+    # image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Baserow - No-Code Database Platform
+  # ═══════════════════════════════════════════════════════════════════════════
+  baserow:
+    image: baserow/baserow:1.34.2
+    container_name: baserow
+    restart: unless-stopped
+    ports:
+      - "85:80"
+      - "443:443"
+    environment:
+      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL:-http://host.docker.internal:85}
+    volumes:
+      - baserow-data:/baserow/data
+    shm_size: 256mb
+    networks:
+      - n8n-toolkit-network
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Networks
+# ═══════════════════════════════════════════════════════════════════════════
+networks:
+  n8n-toolkit-network:
+    driver: bridge
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Volumes
+# ═══════════════════════════════════════════════════════════════════════════
+volumes:
+  n8n-data:
+    driver: local
+  minio-data:
+    driver: local
+  baserow-data:
+    driver: local
