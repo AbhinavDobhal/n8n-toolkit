@@ -1,7 +1,5 @@
 version: 3
 
-authtoken: ${NGROK_AUTHTOKEN}
-
 tunnels:
   n8n:
     proto: http
