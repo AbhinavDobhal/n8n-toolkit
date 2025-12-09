@@ -5,17 +5,9 @@ tunnels:
     proto: http
     addr: n8n:5678
     
-  minio-api:
-    proto: http
-    addr: minio:9000
-    
   minio-console:
     proto: http
     addr: minio:9001
-    
-  kokoro-tts:
-    proto: http
-    addr: kokoro-tts:8880
     
   baserow:
     proto: http
