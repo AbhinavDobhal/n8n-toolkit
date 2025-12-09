@@ -18,6 +18,7 @@ help:
 	@echo "  make status     - Show status of all services"
 	@echo "  make endpoints  - Show all service endpoints and URLs"
 	@echo "  make pull       - Pull latest Docker images"
+	@echo "  make update-webhook - Fetch ngrok URL and update n8n WEBHOOK_URL"
 	@echo "  make env        - Create .env file from .env.example"
 	@echo "  make reset      - Stop and remove all containers and volumes (DESTRUCTIVE)"
 	@echo "  make clean      - Remove stopped containers and unused images"
@@ -44,6 +45,12 @@ env:
 pull:
 	@echo "📦 Pulling latest Docker images..."
 	docker compose pull
+
+# Update n8n webhook URL from ngrok
+update-webhook:
+	@echo "🔄 Updating n8n webhook URL from ngrok..."
+	@chmod +x update-webhook-url.sh
+	@./update-webhook-url.sh
 
 # Start all services
 start: env
