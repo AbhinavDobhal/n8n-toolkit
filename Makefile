@@ -48,7 +48,7 @@ pull:
 # Start all services
 start: env
 	@echo "🚀 Starting n8n Toolkit Stack..."
-	docker compose up -d
+	docker compose up -d --remove-orphans
 	@echo ""
 	@echo "✅ All services started!"
 	@echo ""
@@ -71,7 +71,24 @@ stop:
 	@echo "✅ All services stopped."
 
 # Restart all services
-restart: stop start
+restart:
+	@echo "🔄 Restarting n8n Toolkit Stack..."
+	docker compose down --remove-orphans
+	docker compose up -d --remove-orphans
+	@echo ""
+	@echo "✅ All services restarted!"
+	@echo ""
+	@echo "═══════════════════════════════════════════════════════════════════════════" 
+	@echo "🌐 Access your services at:"
+	@echo "═══════════════════════════════════════════════════════════════════════════"
+	@echo "   n8n (Automation)     → http://localhost:5678"
+	@echo "   MinIO Console        → http://localhost:9001"
+	@echo "   Kokoro TTS           → http://localhost:8880/web"
+	@echo "   Baserow (Database)   → http://localhost:85"
+	@echo "═══════════════════════════════════════════════════════════════════════════"
+	@echo ""
+	@echo "💡 Run 'make endpoints' for detailed API endpoints"
+	@echo ""
 
 # View logs for all services
 logs:

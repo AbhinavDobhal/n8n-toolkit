@@ -1,6 +1,21 @@
-version: '3.8'
-
 services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ngrok - Secure Tunnels to Localhost
+  # ═══════════════════════════════════════════════════════════════════════════
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    command: start --all --config /etc/ngrok.yml
+    ports:
+      - "4040:4040"
+    volumes:
+      - ./.ngrok.yml:/etc/ngrok.yml:ro
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    networks:
+      - n8n-toolkit-network
+
   # ═══════════════════════════════════════════════════════════════════════════
   # n8n - Workflow Automation Tool
   # ═══════════════════════════════════════════════════════════════════════════
@@ -16,6 +31,7 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-password123}
+      - N8N_SECURE_COOKIE=false
     volumes:
       - n8n-data:/home/node/.n8n
     networks:
