@@ -4,6 +4,10 @@ tunnels:
   minio-console:
     proto: http
     addr: minio:9001
+  
+  kokoro-tts:
+    proto: http
+    addr: kokoro-tts:8880
     
   baserow:
     proto: http

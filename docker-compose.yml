@@ -1,22 +1,5 @@
 services:
   # ═══════════════════════════════════════════════════════════════════════════
-  # ngrok - Secure Tunnels to Localhost
-  # ═══════════════════════════════════════════════════════════════════════════
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok
-    restart: unless-stopped
-    command: start --all --config /etc/ngrok.yml
-    ports:
-      - "4040:4040"
-    volumes:
-      - ./.ngrok.yml:/etc/ngrok.yml:ro
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    networks:
-      - n8n-toolkit-network
-
-  # ═══════════════════════════════════════════════════════════════════════════
   # n8n - Workflow Automation Tool
   # ═══════════════════════════════════════════════════════════════════════════
   n8n:
@@ -49,6 +32,8 @@ services:
     ports:
       - "9000:9000"   # API
       - "9001:9001"   # Console
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-password123}
@@ -96,6 +81,8 @@ services:
     restart: unless-stopped
     ports:
       - "8880:8880"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - n8n-toolkit-network
     # ─────────────────────────────────────────────────────────────────────────
@@ -120,6 +107,8 @@ services:
     ports:
       - "85:80"
       - "443:443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL:-http://host.docker.internal:85}
     volumes:
