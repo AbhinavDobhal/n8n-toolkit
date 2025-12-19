@@ -3,7 +3,7 @@ services:
   # n8n - Workflow Automation Tool
   # ═══════════════════════════════════════════════════════════════════════════
   n8n:
-    image: docker.n8n.io/n8nio/n8n:1.123.4
+    image: docker.n8n.io/n8nio/n8n:2.0.3
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -71,49 +71,17 @@ services:
     networks:
       - n8n-toolkit-network
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # Kokoro TTS - Text-to-Speech Service (CPU Version)
-  # For GPU version, see comments below
-  # ═══════════════════════════════════════════════════════════════════════════
-  kokoro-tts:
-    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.2
-    container_name: kokoro-tts
-    restart: unless-stopped
-    ports:
-      - "8880:8880"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - n8n-toolkit-network
-    # ─────────────────────────────────────────────────────────────────────────
-    # GPU VERSION: Uncomment the following and comment out the CPU image above
-    # ─────────────────────────────────────────────────────────────────────────
-    # image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # Baserow - No-Code Database Platform
+  # gTTS Service - Text-to-Speech (FastAPI)
   # ═══════════════════════════════════════════════════════════════════════════
-  baserow:
-    image: baserow/baserow:1.34.2
-    container_name: baserow
+  tts-service:
+    build:
+      context: ./tts-service
+    container_name: tts-service
     restart: unless-stopped
     ports:
-      - "85:80"
-      - "443:443"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL:-http://host.docker.internal:85}
-    volumes:
-      - baserow-data:/baserow/data
-    shm_size: 256mb
+      - "8880:5000"
     networks:
       - n8n-toolkit-network
 
@@ -122,6 +90,7 @@ services:
   # ═══════════════════════════════════════════════════════════════════════════
   nca-toolkit:
     image: stephengpope/no-code-architects-toolkit:latest
+    platform: linux/amd64
     container_name: nca-toolkit
     restart: unless-stopped
     ports:
@@ -155,5 +124,5 @@ volumes:
     driver: local
   minio-data:
     driver: local
-  baserow-data:
+  tts-data:
     driver: local

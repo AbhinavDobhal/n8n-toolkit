@@ -1,6 +1,6 @@
 # 🛠️ n8n Toolkit - Complete Automation Stack
 
-A comprehensive Docker Compose setup for running a complete no-code automation stack including n8n workflow automation, MinIO object storage, Kokoro TTS, and Baserow database.
+A comprehensive Docker Compose setup for running a complete no-code automation stack including n8n workflow automation, MinIO object storage, and a gTTS-powered TTS service.
 
 ## 📋 Table of Contents
 
@@ -10,7 +10,6 @@ A comprehensive Docker Compose setup for running a complete no-code automation s
 - [Quick Start](#-quick-start)
 - [Configuration](#-configuration)
 - [Service Details](#-service-details)
-- [GPU Support for Kokoro TTS](#-gpu-support-for-kokoro-tts)
 - [Accessing Services](#-accessing-services)
 - [Troubleshooting](#-troubleshooting)
 - [Useful Commands](#-useful-commands)
@@ -23,8 +22,7 @@ This toolkit provides a self-hosted automation stack that eliminates the need fo
 
 - **Workflow Automation** - Build complex automations with n8n
 - **Object Storage** - S3-compatible storage with MinIO
-- **Text-to-Speech** - High-quality TTS with Kokoro
-- **Database UI** - No-code database management with Baserow
+- **Text-to-Speech** - gTTS-powered TTS service
 
 ---
 
@@ -34,8 +32,8 @@ This toolkit provides a self-hosted automation stack that eliminates the need fo
 |---------|-------------|------|
 | **n8n** | Workflow automation platform | 5678 |
 | **MinIO** | S3-compatible object storage | 9000 (API), 9001 (Console) |
-| **Kokoro TTS** | Text-to-speech engine | 8880 |
-| **Baserow** | No-code database platform | 85 |
+| **gTTS Service** | Text-to-speech (Google TTS) | 8880 |
+| **NCA Toolkit** | No-Code Architects Toolkit UI | 8181 |
 
 ---
 
@@ -98,7 +96,6 @@ docker compose ps
 | `MINIO_ROOT_PASSWORD` | `password123` | MinIO admin password |
 | `S3_BUCKET_NAME` | `nca-toolkit` | Default bucket name |
 | `S3_REGION` | `None` | S3 region (use `None` for MinIO) |
-| `BASEROW_PUBLIC_URL` | `http://host.docker.internal:85` | Baserow public URL |
 
 ---
 
@@ -128,47 +125,14 @@ MinIO provides S3-compatible object storage for all your files.
 **Initial Setup:**
 The `minio-setup` container automatically creates the `nca-toolkit` bucket on first run.
 
-### 🗣️ Kokoro TTS (Text-to-Speech)
+### 🗣️ gTTS Service (Text-to-Speech)
 
-High-quality text-to-speech synthesis.
+Simple text-to-speech service using Google Text-to-Speech.
 
 - **URL**: http://localhost:8880
-- **Web Interface**: http://localhost:8880/web
-
-### 📋 Baserow (Database)
-
-No-code database platform with a spreadsheet-like interface.
-
-- **URL**: http://localhost:85
-- **Documentation**: https://baserow.io/docs
-
----
-
-## 🎮 GPU Support for Kokoro TTS
-
-To enable GPU acceleration for Kokoro TTS:
-
-1. Ensure you have an NVIDIA GPU with proper drivers
-2. Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-3. Modify `docker-compose.yml`:
-
-```yaml
-kokoro-tts:
-  image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
-  container_name: kokoro-tts
-  restart: unless-stopped
-  ports:
-    - "8880:8880"
-  deploy:
-    resources:
-      reservations:
-        devices:
-          - driver: nvidia
-            count: all
-            capabilities: [gpu]
-  networks:
-    - n8n-toolkit-network
-```
+- **Health**: http://localhost:8880/health
+- **API**: POST http://localhost:8880/tts
+- **Payload**: `{ "text": "Hello", "lang": "en", "slow": false }`
 
 ---
 
@@ -179,8 +143,7 @@ kokoro-tts:
 | n8n | http://localhost:5678 |
 | MinIO Console | http://localhost:9001 |
 | MinIO API | http://localhost:9000 |
-| Kokoro TTS Web | http://localhost:8880/web |
-| Baserow | http://localhost:85 |
+| gTTS Service | http://localhost:8880 |
 
 > **Note**: When accessing from within containers, use service names (e.g., `http://minio:9000`) or `host.docker.internal` for the host machine.
 
@@ -263,8 +226,7 @@ docker exec -it n8n /bin/sh
 This project combines multiple open-source tools:
 - **n8n**: [Sustainable Use License](https://github.com/n8n-io/n8n/blob/master/LICENSE.md)
 - **MinIO**: [GNU AGPL v3](https://github.com/minio/minio/blob/master/LICENSE)
-- **Baserow**: [MIT License](https://gitlab.com/baserow/baserow/-/blob/master/LICENSE)
-- **Kokoro TTS**: Check repository for license
+- **gTTS PyPI**: https://pypi.org/project/gTTS/
 
 ---
 
@@ -278,5 +240,4 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 - [n8n Documentation](https://docs.n8n.io/)
 - [MinIO Documentation](https://min.io/docs/minio/container/index.html)
-- [Baserow Documentation](https://baserow.io/docs)
-- [Kokoro TTS GitHub](https://github.com/remsky/Kokoro-FastAPI)
+- [Orpheus FastAPI Repository](https://github.com/Lex-au/Orpheus-FastAPI)
