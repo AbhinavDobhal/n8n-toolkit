@@ -15,12 +15,46 @@ services:
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-password123}
       - N8N_SECURE_COOKIE=false
+      # PostgreSQL Database Configuration
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST:-postgres}
+      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT:-5432}
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE:-n8n}
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER:-root}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD:-root}
+      - DB_POSTGRESDB_SCHEMA=public
     volumes:
       - n8n-data:/home/node/.n8n
     networks:
       - n8n-toolkit-network
     depends_on:
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PostgreSQL Database
+  # ═══════════════════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_POSTGRESDB_USER:-root}
+      - POSTGRES_PASSWORD=${DB_POSTGRESDB_PASSWORD:-root}
+      - POSTGRES_DB=${DB_POSTGRESDB_DATABASE:-n8n}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - n8n-toolkit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ═══════════════════════════════════════════════════════════════════════════
   # MinIO - S3-Compatible Object Storage
@@ -105,7 +139,8 @@ services:
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-storage}
       - S3_REGION=${S3_REGION:-None}
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     networks:
       - n8n-toolkit-network
 
@@ -121,6 +156,8 @@ networks:
 # ═══════════════════════════════════════════════════════════════════════════
 volumes:
   n8n-data:
+    driver: local
+  postgres-data:
     driver: local
   minio-data:
     driver: local

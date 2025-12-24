@@ -1,0 +1,181 @@
+{
+  "name": "FREE Loop-Based 4-Minute Song Generator (Suno)",
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [-900, 300]
+    },
+    {
+      "id": "set_config",
+      "name": "Set Config",
+      "type": "n8n-nodes-base.set",
+      "position": [-700, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "SUNO_API_BASE", "value": "http://localhost:3000" },
+            { "name": "prompt", "value": "Epic cinematic song about hope, resilience, and triumph" }
+          ],
+          "number": [
+            { "name": "maxExtends", "value": 3 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "generate",
+      "name": "Generate Base Song",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [-450, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.SUNO_API_BASE }}/api/custom_generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "prompt", "value": "={{ $json.prompt }}" },
+            { "name": "make_instrumental", "value": false },
+            { "name": "wait_audio", "value": false }
+          ]
+        }
+      }
+    },
+    {
+      "id": "init_loop",
+      "name": "Init Loop",
+      "type": "n8n-nodes-base.set",
+      "position": [-200, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "clipId", "value": "={{ $json[0].id }}" }
+          ],
+          "number": [
+            { "name": "extendCount", "value": 0 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "if_loop",
+      "name": "Extend?",
+      "type": "n8n-nodes-base.if",
+      "position": [50, 300],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.extendCount }}",
+              "operation": "smaller",
+              "value2": "={{ $json.maxExtends }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "extend",
+      "name": "Extend Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [300, 150],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.SUNO_API_BASE }}/api/extend_audio",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "clip_id", "value": "={{ $json.clipId }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "update_loop",
+      "name": "Update Loop",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 150],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "clipId", "value": "={{ $json.clip_id }}" }
+          ],
+          "number": [
+            { "name": "extendCount", "value": "={{ $json.extendCount + 1 }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "concat",
+      "name": "Concat Final Song",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [300, 450],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.SUNO_API_BASE }}/api/concat",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "clip_id", "value": "={{ $json.clipId }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get_final",
+      "name": "Get Final Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [550, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.SUNO_API_BASE }}/api/get?id={{ $json.clipId }}"
+      }
+    },
+    {
+      "id": "download",
+      "name": "Download MP3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [800, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json[0].audio_url }}",
+        "responseFormat": "file",
+        "binaryPropertyName": "data"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Config" }]]
+    },
+    "Set Config": {
+      "main": [[{ "node": "Generate Base Song" }]]
+    },
+    "Generate Base Song": {
+      "main": [[{ "node": "Init Loop" }]]
+    },
+    "Init Loop": {
+      "main": [[{ "node": "Extend?" }]]
+    },
+    "Extend?": {
+      "main": [
+        [{ "node": "Extend Audio" }],
+        [{ "node": "Concat Final Song" }]
+      ]
+    },
+    "Extend Audio": {
+      "main": [[{ "node": "Update Loop" }]]
+    },
+    "Update Loop": {
+      "main": [[{ "node": "Extend?" }]]
+    },
+    "Concat Final Song": {
+      "main": [[{ "node": "Get Final Audio" }]]
+    },
+    "Get Final Audio": {
+      "main": [[{ "node": "Download MP3" }]]
+    }
+  }
+}

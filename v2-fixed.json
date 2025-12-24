@@ -1,0 +1,284 @@
+{
+  "name": "Audio Production Pipeline - 4 Parts Merge V2",
+  "description": "Generate and merge 4-part song audio using TTS services",
+  "version": "2.0",
+  "active": true,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "read_config",
+      "name": "Read Audio Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [200, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:5000/api/config",
+        "authentication": "none"
+      }
+    },
+    {
+      "id": "extract_parts",
+      "name": "Extract Parts",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 1,
+      "position": [400, 0],
+      "parameters": {
+        "operation": "splitOutItems",
+        "propertyName": "parts"
+      }
+    },
+    {
+      "id": "extract_segments",
+      "name": "Extract Segments",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 1,
+      "position": [600, 0],
+      "parameters": {
+        "operation": "splitOutItems",
+        "propertyName": "segments"
+      }
+    },
+    {
+      "id": "generate_tts",
+      "name": "Generate TTS Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8880/tts",
+        "sendBody": true,
+        "contentType": "application/json",
+        "body": "{\n  \"text\": \"={{ $json.text }}\",\n  \"lang\": \"en-US\",\n  \"emotion\": \"={{ $json.emotion }}\",\n  \"rate\": \"={{ $json.rate }}\"\n}",
+        "responseFormat": "file"
+      }
+    },
+    {
+      "id": "save_segment",
+      "name": "Save Segment File",
+      "type": "n8n-nodes-base.writeLocalFile",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "filePath": "/tmp/audio_segments/{{ $json.id }}_{{ $json.id }}.mp3"
+      }
+    },
+    {
+      "id": "collect_segments",
+      "name": "Collect All Segments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1200, 0],
+      "parameters": {
+        "mode": "passThrough",
+        "options": {
+          "multiInput": true
+        }
+      }
+    },
+    {
+      "id": "merge_audio",
+      "name": "Merge Parts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1400, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/merge",
+        "sendBody": true,
+        "contentType": "application/json",
+        "body": "{\n  \"files\": \"={{ $json.files }}\",\n  \"output\": \"final_song_complete.mp3\"\n}"
+      }
+    },
+    {
+      "id": "update_status",
+      "name": "Update Status - Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1600, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/status",
+        "sendBody": true,
+        "contentType": "application/json",
+        "body": "{\n  \"status\": \"completed\",\n  \"timestamp\": \"={{ $now.toISOString() }}\",\n  \"output_file\": \"final_song_complete.mp3\"\n}"
+      }
+    },
+    {
+      "id": "error_handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.catchError",
+      "typeVersion": 1,
+      "position": [800, 200],
+      "parameters": {}
+    },
+    {
+      "id": "log_error",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/error",
+        "sendBody": true,
+        "contentType": "application/json",
+        "body": "{\n  \"error\": \"={{ $json.error.message }}\",\n  \"timestamp\": \"={{ $now.toISOString() }}\"\n}"
+      }
+    }
+  ],
+  "connections": {
+    "trigger": {
+      "main": [
+        [
+          {
+            "node": "read_config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read_config": {
+      "main": [
+        [
+          {
+            "node": "extract_parts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_parts": {
+      "main": [
+        [
+          {
+            "node": "extract_segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_segments": {
+      "main": [
+        [
+          {
+            "node": "generate_tts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "error_handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_tts": {
+      "main": [
+        [
+          {
+            "node": "save_segment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "error_handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_segment": {
+      "main": [
+        [
+          {
+            "node": "collect_segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "collect_segments": {
+      "main": [
+        [
+          {
+            "node": "merge_audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_audio": {
+      "main": [
+        [
+          {
+            "node": "update_status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "error_handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_status": {
+      "main": [
+        []
+      ]
+    },
+    "error_handler": {
+      "main": [
+        [
+          {
+            "node": "log_error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_error": {
+      "main": [
+        []
+      ]
+    }
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "project": "Song Audio Production - 4 Parts Merge",
+  "description": "Complete audio merging pipeline for song production with 4 parts (~60s each)",
+  "version": "1.0.0",
+  "metadata": {
+    "totalDuration": "~240 seconds (4 minutes)",
+    "outputFormat": "mp3",
+    "bitrate": "192k",
+    "sampleRate": 44100,
+    "channels": "stereo"
+  },
+  "parts": [
+    {
+      "id": "part1",
+      "name": "Part 1 – Intro + Verse + Chorus",
+      "duration": 60,
+      "description": "Opening section with introduction, first verse, and first chorus",
+      "segments": [
+        {
+          "id": "intro",
+          "type": "narration",
+          "text": "Welcome to our musical journey. This is the beginning of an epic adventure.",
+          "duration": 15,
+          "voice": "en-US-AriaNeural",
+          "emotion": "cheerful",
+          "rate": "normal"
+        },
+        {
+          "id": "verse1",
+          "type": "lyrics",
+          "text": "In the morning light we rise, spreading wings across the skies. Every moment feels alive, with dreams that help us to survive. Walking down this winding road, carrying our precious load. Finding strength in unity, embracing our new destiny.",
+          "duration": 25,
+          "voice": "en-US-AriaNeural",
+          "emotion": "neutral",
+          "rate": "normal"
+        },
+        {
+          "id": "chorus1",
+          "type": "lyrics",
+          "text": "Oh, we're reaching for the stars, painting light across the scars. Dancing in the cosmic flow, letting our true colors show. Together we are strong and free, this is our symphony.",
+          "duration": 20,
+          "voice": "en-US-AriaNeural",
+          "emotion": "excited",
+          "rate": "normal"
+        }
+      ],
+      "outputFile": "part1_intro_verse_chorus.mp3"
+    },
+    {
+      "id": "part2",
+      "name": "Part 2 – Verse 2 + Chorus",
+      "duration": 60,
+      "description": "Second verse with contrasting emotions and repetition of chorus",
+      "segments": [
+        {
+          "id": "verse2",
+          "type": "lyrics",
+          "text": "Through the valleys dark and deep, when the night won't let us sleep. We find hope in every call, standing tall above it all. Every heartbeat tells a story, of our journey to the glory. In the silence we will find, peace of spirit, peace of mind.",
+          "duration": 30,
+          "voice": "en-US-AriaNeural",
+          "emotion": "sad",
+          "rate": "normal"
+        },
+        {
+          "id": "chorus2",
+          "type": "lyrics",
+          "text": "Oh, we're reaching for the stars, painting light across the scars. Dancing in the cosmic flow, letting our true colors show. Together we are strong and free, this is our symphony.",
+          "duration": 30,
+          "voice": "en-US-AriaNeural",
+          "emotion": "excited",
+          "rate": "normal"
+        }
+      ],
+      "outputFile": "part2_verse2_chorus.mp3"
+    },
+    {
+      "id": "part3",
+      "name": "Part 3 – Bridge + Chorus",
+      "duration": 60,
+      "description": "Bridge section building to climax with final chorus",
+      "segments": [
+        {
+          "id": "bridge",
+          "type": "lyrics",
+          "text": "Now is the moment, we ignite the fire within. No more holding back, let the revolution begin. Can you feel it in your soul, the power taking control. From the whispers to a roar, this is what we're living for. Every voice becomes a flame, burning bright, calling out your name. In this moment we are one, our journey has begun.",
+          "duration": 35,
+          "voice": "en-US-AriaNeural",
+          "emotion": "excited",
+          "rate": "normal"
+        },
+        {
+          "id": "chorus3",
+          "type": "lyrics",
+          "text": "Oh, we're reaching for the stars, painting light across the scars. Dancing in the cosmic flow, letting our true colors show. Together we are strong and free, this is our symphony.",
+          "duration": 25,
+          "voice": "en-US-AriaNeural",
+          "emotion": "excited",
+          "rate": "fast_25"
+        }
+      ],
+      "outputFile": "part3_bridge_chorus.mp3"
+    },
+    {
+      "id": "part4",
+      "name": "Part 4 – Outro",
+      "duration": 60,
+      "description": "Closing section with outro and final message",
+      "segments": [
+        {
+          "id": "outro_verse",
+          "type": "lyrics",
+          "text": "As the sun begins to set on this chapter of our life. We carry forward all we've learned, through struggle and through strife. The journey continues on, long after this song. In your heart the melody will play, guiding you along the way.",
+          "duration": 30,
+          "voice": "en-US-AriaNeural",
+          "emotion": "cheerful",
+          "rate": "normal"
+        },
+        {
+          "id": "outro_message",
+          "type": "narration",
+          "text": "Thank you for joining us on this sonic adventure. Remember, the symphony continues within you. Until we meet again, keep your dreams alive.",
+          "duration": 20,
+          "voice": "en-US-AriaNeural",
+          "emotion": "neutral",
+          "rate": "normal"
+        },
+        {
+          "id": "outro_ending",
+          "type": "narration",
+          "text": "This is the end of our musical journey. But every ending is a new beginning.",
+          "duration": 10,
+          "voice": "en-US-AriaNeural",
+          "emotion": "peaceful",
+          "rate": "slow_25"
+        }
+      ],
+      "outputFile": "part4_outro.mp3"
+    }
+  ],
+  "mergeConfiguration": {
+    "outputFile": "final_song_complete.mp3",
+    "mergeOrder": [
+      "part1_intro_verse_chorus.mp3",
+      "part2_verse2_chorus.mp3",
+      "part3_bridge_chorus.mp3",
+      "part4_outro.mp3"
+    ],
+    "transitions": {
+      "type": "seamless",
+      "crossfadeDuration": 0.5,
+      "silenceBetweenParts": 0
+    },
+    "audioNormalization": {
+      "enabled": true,
+      "targetLoudness": -20,
+      "unit": "LUFS"
+    },
+    "qualitySettings": {
+      "format": "mp3",
+      "bitrate": "192k",
+      "sampleRate": 44100,
+      "channels": 2
+    }
+  },
+  "ttsApiConfiguration": {
+    "service": "edge-tts",
+    "endpoint": "http://localhost:8880/tts",
+    "fallbackService": "orpheus-tts",
+    "fallbackEndpoint": "http://localhost:5005/v1/audio/speech",
+    "timeout": 60,
+    "maxRetries": 3
+  },
+  "processingSteps": [
+    {
+      "step": 1,
+      "name": "Generate Part 1 Audio",
+      "action": "Generate all segments in Part 1",
+      "inputs": ["intro", "verse1", "chorus1"],
+      "output": "part1_intro_verse_chorus.mp3"
+    },
+    {
+      "step": 2,
+      "name": "Generate Part 2 Audio",
+      "action": "Generate all segments in Part 2",
+      "inputs": ["verse2", "chorus2"],
+      "output": "part2_verse2_chorus.mp3"
+    },
+    {
+      "step": 3,
+      "name": "Generate Part 3 Audio",
+      "action": "Generate all segments in Part 3",
+      "inputs": ["bridge", "chorus3"],
+      "output": "part3_bridge_chorus.mp3"
+    },
+    {
+      "step": 4,
+      "name": "Generate Part 4 Audio",
+      "action": "Generate all segments in Part 4",
+      "inputs": ["outro_verse", "outro_message", "outro_ending"],
+      "output": "part4_outro.mp3"
+    },
+    {
+      "step": 5,
+      "name": "Merge All Parts",
+      "action": "Concatenate all audio files in order",
+      "inputs": [
+        "part1_intro_verse_chorus.mp3",
+        "part2_verse2_chorus.mp3",
+        "part3_bridge_chorus.mp3",
+        "part4_outro.mp3"
+      ],
+      "output": "final_song_complete.mp3"
+    },
+    {
+      "step": 6,
+      "name": "Audio Normalization",
+      "action": "Normalize audio levels and apply audio processing",
+      "inputs": ["final_song_complete.mp3"],
+      "output": "final_song_complete_normalized.mp3"
+    }
+  ],
+  "additionalResources": {
+    "pythonScriptLocation": "audio_merger.py",
+    "requirements": [
+      "pydub>=0.25.1",
+      "requests>=2.28.0",
+      "python-ffmpeg>=1.0.0"
+    ],
+    "ffmpegRequired": true,
+    "documentation": "See audio_merger.py for complete implementation"
+  }
+}

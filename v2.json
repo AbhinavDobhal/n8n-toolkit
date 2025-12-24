@@ -1,0 +1,200 @@
+{
+  "name": "MusicGen Studio V2 (Clean)",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [-900, 300]
+    },
+    {
+      "id": "get_rows",
+      "name": "Get Pending Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [-700, 300],
+      "parameters": {
+        "operation": "read",
+        "filtersUI": {
+          "values": [
+            { "lookupColumn": "Status", "lookupValue": "Pending" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "limit",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "position": [-500, 300],
+      "parameters": { "amount": 1 }
+    },
+    {
+      "id": "ai_generate",
+      "name": "AI – Config + Lyrics",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [-250, 300],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['What type of song to generate?'] }}",
+        "options": {
+          "systemMessage": "Return ONE JSON with keys: sunoConfig, lyrics.\nRules:\n- sunoConfig must be Suno-ready\n- lyrics must be full song text\n- No explanations\n- JSON only"
+        }
+      }
+    },
+    {
+      "id": "create_song",
+      "name": "Create Song",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [50, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "prompt", "value": "={{ $json.sunoConfig.prompt }}" },
+            { "name": "style", "value": "={{ $json.sunoConfig.style }}" },
+            { "name": "title", "value": "={{ $json.sunoConfig.title }}" },
+            { "name": "customMode", "value": true },
+            { "name": "instrumental", "value": false },
+            { "name": "model", "value": "V5" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "init_retry",
+      "name": "Init Retry",
+      "type": "n8n-nodes-base.set",
+      "position": [250, 300],
+      "parameters": {
+        "values": {
+          "number": [
+            { "name": "retryCount", "value": 0 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wait",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [450, 300],
+      "parameters": { "amount": 10 }
+    },
+    {
+      "id": "check_status",
+      "name": "Check Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.kie.ai/api/v1/generate/record-info",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "taskId", "value": "={{ $json.taskId }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "if_done",
+      "name": "If SUCCESS",
+      "type": "n8n-nodes-base.if",
+      "position": [850, 300],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.data.status }}",
+              "operation": "equals",
+              "value2": "SUCCESS"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "split_tracks",
+      "name": "Split Tracks",
+      "type": "n8n-nodes-base.itemLists",
+      "position": [1050, 200],
+      "parameters": {
+        "operation": "splitOutItems",
+        "propertyName": "data.response.sunoData"
+      }
+    },
+    {
+      "id": "download_audio",
+      "name": "Download Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1250, 200],
+      "parameters": {
+        "url": "={{ $json.audioUrl }}",
+        "responseFormat": "file"
+      }
+    },
+    {
+      "id": "upload_drive",
+      "name": "Upload to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [1450, 200],
+      "parameters": {
+        "name": "={{ $json.title }}.mp3"
+      }
+    },
+    {
+      "id": "collect_links",
+      "name": "Collect Links",
+      "type": "n8n-nodes-base.merge",
+      "position": [1650, 300],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "final_update",
+      "name": "Update Sheet (Completed)",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1850, 300],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Id": "={{ $json.Id }}",
+            "Status": "Completed",
+            "Lyrics": "={{ $node['AI – Config + Lyrics'].json.lyrics }}",
+            "VideoLinks": "={{ $json.webViewLink }}",
+            "DateCompleted": "={{ $now }}"
+          },
+          "matchingColumns": ["Id"]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Get Pending Rows" }]] },
+    "Get Pending Rows": { "main": [[{ "node": "Limit" }]] },
+    "Limit": { "main": [[{ "node": "AI – Config + Lyrics" }]] },
+    "AI – Config + Lyrics": { "main": [[{ "node": "Create Song" }]] },
+    "Create Song": { "main": [[{ "node": "Init Retry" }]] },
+    "Init Retry": { "main": [[{ "node": "Wait" }]] },
+    "Wait": { "main": [[{ "node": "Check Status" }]] },
+    "Check Status": { "main": [[{ "node": "If SUCCESS" }]] },
+    "If SUCCESS": {
+      "main": [
+        [{ "node": "Split Tracks" }],
+        [{ "node": "Wait" }]
+      ]
+    },
+    "Split Tracks": { "main": [[{ "node": "Download Audio" }]] },
+    "Download Audio": { "main": [[{ "node": "Upload to Drive" }]] },
+    "Upload to Drive": { "main": [[{ "node": "Collect Links" }]] },
+    "Collect Links": { "main": [[{ "node": "Update Sheet (Completed)" }]] }
+  }
+}
