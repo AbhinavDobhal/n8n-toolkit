@@ -28,33 +28,8 @@ services:
     networks:
       - n8n-toolkit-network
     depends_on:
-      postgres:
-        condition: service_healthy
       minio:
         condition: service_healthy
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # PostgreSQL Database
-  # ═══════════════════════════════════════════════════════════════════════════
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=${DB_POSTGRESDB_USER:-root}
-      - POSTGRES_PASSWORD=${DB_POSTGRESDB_PASSWORD:-root}
-      - POSTGRES_DB=${DB_POSTGRESDB_DATABASE:-n8n}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - n8n-toolkit-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ═══════════════════════════════════════════════════════════════════════════
   # MinIO - S3-Compatible Object Storage
@@ -119,30 +94,7 @@ services:
     networks:
       - n8n-toolkit-network
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # NCA Toolkit - No-Code Architects Toolkit
-  # ═══════════════════════════════════════════════════════════════════════════
-  nca-toolkit:
-    image: stephengpope/no-code-architects-toolkit:latest
-    platform: linux/amd64
-    container_name: nca-toolkit
-    restart: unless-stopped
-    ports:
-      - "8181:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - API_KEY=${NCA_API_KEY:-1150810d0dd0613bdabd8635bf75e6282ddc505202212ed32c1a8c357fa39d1c}
-      - S3_ENDPOINT_URL=http://minio:9000
-      - S3_ACCESS_KEY=${MINIO_ROOT_USER:-admin}
-      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-password123}
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-storage}
-      - S3_REGION=${S3_REGION:-None}
-    depends_on:
-      minio:
-        condition: service_healthy
-    networks:
-      - n8n-toolkit-network
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Networks
@@ -156,8 +108,6 @@ networks:
 # ═══════════════════════════════════════════════════════════════════════════
 volumes:
   n8n-data:
-    driver: local
-  postgres-data:
     driver: local
   minio-data:
     driver: local
