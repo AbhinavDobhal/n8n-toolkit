@@ -23,10 +23,6 @@ help:
 	@echo "  make clean      - Remove stopped containers and unused images"
 	@echo ""
 	@echo "  make logs-n8n       - View n8n logs"
-	@echo "  make logs-minio     - View MinIO logs"
-	@echo "  make logs-baserow   - View Baserow logs"
-	@echo "  make logs-tts       - View gTTS service logs"
-	@echo "  make logs-nca       - View NCA Toolkit logs"
 	@echo "  make build-n8n      - Build custom n8n image (with ffmpeg)"
 	@echo "  make rebuild-n8n    - Build and restart n8n service"
 	@echo ""
@@ -59,9 +55,6 @@ start: env
 	@echo "🌐 Access your services LOCALLY at:"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
-	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8881"
-	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
 	@echo "═══════════════════════════════════════════════════════════════════════════"
@@ -92,9 +85,6 @@ restart:
 	@echo "🌐 Access your services LOCALLY at:"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
-	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8881"
-	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
 	@echo "💡 Run 'make endpoints' for detailed API endpoints"
@@ -109,18 +99,6 @@ logs:
 logs-n8n:
 	docker compose logs -f n8n
 
-logs-minio:
-	docker compose logs -f minio
-
-logs-baserow:
-	docker compose logs -f baserow
-
-logs-tts:
-	docker compose logs -f tts-service
-
-logs-nca:
-	docker compose logs -f nca-toolkit
-
 # Show status
 status:
 	@echo ""
@@ -134,9 +112,6 @@ status:
 	@echo "🌐 Service URLs"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
-	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8881"
-	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo ""
 
 # Show all endpoints
@@ -154,38 +129,6 @@ endpoints:
 	@echo "│ REST API:      http://localhost:5678/api/v1/                            │"
 	@echo "└─────────────────────────────────────────────────────────────────────────┘"
 	@echo ""
-	@echo "┌─────────────────────────────────────────────────────────────────────────┐"
-	@echo "│ 💾 MinIO - S3-Compatible Object Storage                                 │"
-	@echo "├─────────────────────────────────────────────────────────────────────────┤"
-	@echo "│ Console:       http://localhost:9001                                    │"
-	@echo "│ S3 API:        http://localhost:9000                                    │"
-	@echo "│ Health:        http://localhost:9000/minio/health/live                  │"
-	@echo "│ Bucket URL:    http://localhost:9000/storage/                       │"
-	@echo "│                                                                         │"
-	@echo "│ Default Credentials:                                                    │"
-	@echo "│   Username: admin                                                       │"
-	@echo "│   Password: password123                                                 │"
-	@echo "└─────────────────────────────────────────────────────────────────────────┘"
-	@echo ""
-	@echo "┌─────────────────────────────────────────────────────────────────────────┐"
-	@echo "│ 🗣️  gTTS Service - Text-to-Speech                                       │"
-	@echo "├─────────────────────────────────────────────────────────────────────────┤"
-	@echo "│ Health:        http://localhost:8881/health                             │"
-	@echo "│ TTS:           POST http://localhost:8881/tts                           │"
-	@echo "│                                                                         │"
-	@echo "│ API Payload:                                                            │"
-	@echo "│   { text: \"Hello\", lang: \"en\", slow: false }                           │"
-	@echo "└─────────────────────────────────────────────────────────────────────────┘"
-	@echo ""
-	@echo "┌─────────────────────────────────────────────────────────────────────────┐"
-	@echo "│ 🎙️  Kokoro TTS Service - High-Quality Text-to-Speech                   │"
-	@echo "├─────────────────────────────────────────────────────────────────────────┤"
-	@echo "│ Web UI:        http://localhost:8880                                    │"
-	@echo "│ API Docs:      http://localhost:8880/docs                               │"
-	@echo "│ TTS:           POST http://localhost:8880/tts                           │"
-	@echo "└─────────────────────────────────────────────────────────────────────────┘"
-	@echo ""
-
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "📝 Notes:"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
@@ -193,9 +136,6 @@ endpoints:
 	@echo "     'localhost' to access services on the host machine."
 	@echo "   • For container-to-container communication, use service names:"
 	@echo "     - n8n: http://n8n:5678"
-	@echo "     - MinIO: http://minio:9000"
-	@echo "     - gTTS Service: http://tts-service:5000"
-	@echo "     - Kokoro TTS: http://kokoro-tts:5005"
 	@echo ""
 
 # Reset everything (DESTRUCTIVE)
