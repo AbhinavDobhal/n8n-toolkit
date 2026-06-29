@@ -1,0 +1,15 @@
+# Custom n8n image with ffmpeg support
+#
+# n8n 2.x ships as a Docker Hardened Image (Alpine) with no package manager,
+# so `apk add` is unavailable. Instead we copy a statically-linked ffmpeg
+# binary from the static-ffmpeg image — no shared-library dependencies needed.
+FROM mwader/static-ffmpeg:7.1 AS ffmpeg
+
+FROM n8nio/n8n:2.27.5
+
+USER root
+COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg /ffprobe /usr/local/bin/ffprobe
+
+# Switch back to non-root user used by the original image
+USER node

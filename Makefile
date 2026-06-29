@@ -27,6 +27,8 @@ help:
 	@echo "  make logs-baserow   - View Baserow logs"
 	@echo "  make logs-tts       - View gTTS service logs"
 	@echo "  make logs-nca       - View NCA Toolkit logs"
+	@echo "  make build-n8n      - Build custom n8n image (with ffmpeg)"
+	@echo "  make rebuild-n8n    - Build and restart n8n service"
 	@echo ""
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
@@ -58,8 +60,8 @@ start: env
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
 	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8880"
-	@echo "   Baserow (Database)   → http://localhost:85"
+	@echo "   gTTS Service         → http://localhost:8881"
+	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
 	@echo "═══════════════════════════════════════════════════════════════════════════"
@@ -91,8 +93,8 @@ restart:
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
 	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8880"
-	@echo "   NCA Toolkit          → http://localhost:8181"
+	@echo "   gTTS Service         → http://localhost:8881"
+	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
 	@echo "💡 Run 'make endpoints' for detailed API endpoints"
@@ -133,8 +135,8 @@ status:
 	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo "   n8n (Automation)     → http://localhost:5678"
 	@echo "   MinIO Console        → http://localhost:9001"
-	@echo "   gTTS Service         → http://localhost:8880"
-	@echo "   Baserow (Database)   → http://localhost:85"
+	@echo "   gTTS Service         → http://localhost:8881"
+	@echo "   Kokoro TTS Service   → http://localhost:8880"
 	@echo ""
 
 # Show all endpoints
@@ -168,11 +170,19 @@ endpoints:
 	@echo "┌─────────────────────────────────────────────────────────────────────────┐"
 	@echo "│ 🗣️  gTTS Service - Text-to-Speech                                       │"
 	@echo "├─────────────────────────────────────────────────────────────────────────┤"
-	@echo "│ Health:        http://localhost:8880/health                             │"
-	@echo "│ TTS:           POST http://localhost:8880/tts                           │"
+	@echo "│ Health:        http://localhost:8881/health                             │"
+	@echo "│ TTS:           POST http://localhost:8881/tts                           │"
 	@echo "│                                                                         │"
 	@echo "│ API Payload:                                                            │"
 	@echo "│   { text: \"Hello\", lang: \"en\", slow: false }                           │"
+	@echo "└─────────────────────────────────────────────────────────────────────────┘"
+	@echo ""
+	@echo "┌─────────────────────────────────────────────────────────────────────────┐"
+	@echo "│ 🎙️  Kokoro TTS Service - High-Quality Text-to-Speech                   │"
+	@echo "├─────────────────────────────────────────────────────────────────────────┤"
+	@echo "│ Web UI:        http://localhost:8880                                    │"
+	@echo "│ API Docs:      http://localhost:8880/docs                               │"
+	@echo "│ TTS:           POST http://localhost:8880/tts                           │"
 	@echo "└─────────────────────────────────────────────────────────────────────────┘"
 	@echo ""
 
@@ -185,6 +195,7 @@ endpoints:
 	@echo "     - n8n: http://n8n:5678"
 	@echo "     - MinIO: http://minio:9000"
 	@echo "     - gTTS Service: http://tts-service:5000"
+	@echo "     - Kokoro TTS: http://kokoro-tts:5005"
 	@echo ""
 
 # Reset everything (DESTRUCTIVE)
@@ -203,4 +214,15 @@ clean:
 	@echo "🧹 Cleaning up unused Docker resources..."
 	docker compose down --remove-orphans
 	docker system prune -f
-	@echo "✅ Cleanup complete."
+	@echo "✅ Cleanup complete." 
+
+# Build custom n8n image (with ffmpeg)
+build-n8n:
+	@echo "🔧 Building custom n8n image with ffmpeg..."
+	docker compose build n8n
+
+# Build and restart n8n
+rebuild-n8n: build-n8n
+	@echo "🔁 Restarting n8n service..."
+	docker compose up -d n8n
+	@echo "✅ n8n restarted (with ffmpeg)"
