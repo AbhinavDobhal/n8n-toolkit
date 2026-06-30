@@ -10,7 +10,7 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "5171:5678"
     environment:
       - WEBHOOK_URL=${WEBHOOK_URL:-http://host.docker.internal:5678}
       - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
